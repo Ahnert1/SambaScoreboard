@@ -1,0 +1,1069 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Samba Scoreboard — dark neon / arcade, phone-portrait first.
+   Every team-coloured surface reads from the scoped `--team` variable,
+   so one CSS rule serves both teams in whatever colours are picked.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #06060b;
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --line: rgba(255, 255, 255, 0.1);
+  --text: #f3f4fa;
+  --muted: #8a8da6;
+  --faint: #43465e;
+  --danger: #fb7185;
+  --amber: #fbbf24;
+  --team: #22d3ee;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+input {
+  font: inherit;
+  color: inherit;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 5px;
+}
+
+/* ── shell ─────────────────────────────────────────────────────────── */
+
+.app {
+  min-height: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.app__view {
+  min-height: 100%;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: var(--safe-t) 16px calc(24px + var(--safe-b));
+  min-height: 100dvh;
+}
+
+.screen__foot {
+  margin-top: auto;
+  padding-top: 20px;
+  display: grid;
+  gap: 10px;
+}
+
+/* Slow drifting neon blobs behind everything. */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora::before,
+.aurora::after {
+  content: '';
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.18;
+}
+
+.aurora::before {
+  background: radial-gradient(circle, #22d3ee, transparent 65%);
+  top: -30vmax;
+  left: -25vmax;
+  animation: drift-a 24s ease-in-out infinite alternate;
+}
+
+.aurora::after {
+  background: radial-gradient(circle, #e879f9, transparent 65%);
+  bottom: -32vmax;
+  right: -28vmax;
+  animation: drift-b 29s ease-in-out infinite alternate;
+}
+
+@keyframes drift-a {
+  to {
+    transform: translate3d(14vmax, 10vmax, 0) scale(1.18);
+  }
+}
+
+@keyframes drift-b {
+  to {
+    transform: translate3d(-12vmax, -9vmax, 0) scale(1.12);
+  }
+}
+
+/* ── top bar ───────────────────────────────────────────────────────── */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 0 10px;
+  min-height: 62px;
+}
+
+.topbar__title {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.iconbtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 17px;
+  line-height: 1;
+  color: var(--muted);
+  transition: background 0.15s, color 0.15s;
+}
+
+.iconbtn:active {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.iconbtn--danger {
+  color: var(--danger);
+}
+
+/* ── hero (setup) ──────────────────────────────────────────────────── */
+
+.hero {
+  padding: 40px 0 26px;
+  text-align: center;
+}
+
+.hero__title {
+  margin: 0;
+  font-size: clamp(44px, 15vw, 68px);
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  background: linear-gradient(100deg, #22d3ee, #e879f9 55%, #fbbf24);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 24px rgba(232, 121, 249, 0.35));
+}
+
+.hero__sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  padding-left: 0.42em;
+}
+
+/* ── setup ─────────────────────────────────────────────────────────── */
+
+.setup {
+  display: grid;
+  gap: 14px;
+}
+
+.setup__team {
+  border-radius: 20px;
+  padding: 14px 16px 16px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--team) 12%, transparent),
+    color-mix(in srgb, var(--team) 3%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, var(--team) 34%, transparent);
+  box-shadow: 0 14px 44px -22px color-mix(in srgb, var(--team) 90%, transparent);
+}
+
+.setup__label {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--team) 70%, white 30%);
+}
+
+.setup__input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid color-mix(in srgb, var(--team) 30%, transparent);
+  outline: none;
+  font-size: 26px;
+  font-weight: 800;
+  padding: 4px 0 8px;
+  letter-spacing: -0.01em;
+}
+
+.setup__input:focus {
+  border-bottom-color: var(--team);
+}
+
+.swatches {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color 0.15s, transform 0.12s;
+}
+
+.swatch--on {
+  outline-color: currentColor;
+  transform: scale(1.12);
+}
+
+.swatch--on {
+  box-shadow: 0 0 16px -2px;
+}
+
+/* ── big totals ────────────────────────────────────────────────────── */
+
+.totals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.total {
+  position: relative;
+  border-radius: 20px;
+  padding: 16px 14px 18px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--team) 15%, transparent),
+    color-mix(in srgb, var(--team) 4%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, var(--team) 34%, transparent);
+  box-shadow: 0 16px 46px -24px color-mix(in srgb, var(--team) 100%, transparent);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.total__name {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--team) 72%, white 28%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.total__value {
+  margin-top: 8px;
+  font-size: clamp(28px, 9vw, 38px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 0 22px color-mix(in srgb, var(--team) 65%, transparent);
+}
+
+.total--lead::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--team) 75%, transparent);
+  animation: lead-pulse 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes lead-pulse {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.lead {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--team) 75%, white 25%);
+}
+
+.lead--tied {
+  color: var(--muted);
+}
+
+/* ── round table ───────────────────────────────────────────────────── */
+
+.rounds {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.rounds__row {
+  display: grid;
+  grid-template-columns: 64px 1fr 1fr;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  width: 100%;
+  padding: 0 14px;
+  border-top: 1px solid var(--line);
+  text-align: right;
+}
+
+.rounds__row:first-child {
+  border-top: 0;
+}
+
+.rounds__row:not(.rounds__row--empty):not(.rounds__row--total):active {
+  background: var(--surface-2);
+}
+
+.rounds__label {
+  text-align: left;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.rounds__label--wide {
+  grid-column: 1;
+  letter-spacing: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rounds__cell {
+  font-weight: 700;
+  font-size: 16px;
+  color: color-mix(in srgb, var(--team) 55%, white 45%);
+}
+
+.rounds__cell--blank {
+  color: var(--faint);
+}
+
+.rounds__row--total {
+  background: rgba(255, 255, 255, 0.05);
+  min-height: 58px;
+}
+
+.rounds__cell--total {
+  font-size: 19px;
+  font-weight: 900;
+  color: color-mix(in srgb, var(--team) 70%, white 30%);
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--team) 25%, transparent);
+  color: color-mix(in srgb, var(--team) 60%, white 40%);
+  vertical-align: 2px;
+}
+
+.subhead {
+  margin: 24px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+/* ── round entry ───────────────────────────────────────────────────── */
+
+/* One row per category, both teams side by side. `--group` fixes the two
+   team column widths so the sticky header stays in register with the rows. */
+.grid {
+  --group: 100px;
+  --gap: 8px;
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.grid__head {
+  position: sticky;
+  top: var(--safe-t);
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--group) var(--group);
+  gap: var(--gap);
+  align-items: end;
+  padding: 10px 12px 9px;
+  border-radius: 14px;
+  background: rgba(6, 6, 11, 0.93);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+}
+
+.grid__headlabel {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--faint);
+}
+
+.teamcol {
+  text-align: center;
+  min-width: 0;
+}
+
+.teamcol__name {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--team) 72%, white 28%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teamcol__total {
+  display: block;
+  margin-top: 3px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--team) 75%, transparent);
+}
+
+.crow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--group) var(--group);
+  gap: var(--gap);
+  align-items: center;
+  min-height: 56px;
+  padding: 7px 12px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: background 0.18s, border-color 0.18s;
+}
+
+/* A row lights up neutrally, not in a team colour — it belongs to both. */
+.crow--on {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 255, 255, 0.19);
+}
+
+.crow--field {
+  min-height: 60px;
+}
+
+.crow__label {
+  min-width: 0;
+}
+
+.crow__name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.crow__meta {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 3px;
+  line-height: 1.25;
+}
+
+/* One team's −/count/+ group inside a category row. */
+.cell {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 34px;
+  gap: 2px;
+  align-items: center;
+  justify-items: center;
+}
+
+.cell__n {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--faint);
+  transition: color 0.18s, text-shadow 0.18s;
+}
+
+.cell__n--on {
+  color: #fff;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--team) 90%, transparent);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+  flex: none;
+  display: inline-block;
+}
+
+.step {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 19px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  transition: transform 0.08s, background 0.15s;
+}
+
+.step:active {
+  transform: scale(0.9);
+  background: color-mix(in srgb, var(--team) 30%, var(--surface-2));
+}
+
+.step:disabled {
+  opacity: 0.25;
+  transform: none;
+}
+
+.step--plus {
+  border-color: color-mix(in srgb, var(--team) 35%, transparent);
+  color: color-mix(in srgb, var(--team) 70%, white 30%);
+}
+
+/* Card-points input, one per team column. */
+.numcell {
+  display: flex;
+  border-radius: 11px;
+  background: var(--surface-2);
+  border: 1px solid color-mix(in srgb, var(--team) 30%, transparent);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.numcell:focus-within {
+  border-color: var(--team);
+  box-shadow: 0 0 18px -5px var(--team);
+}
+
+.numcell input {
+  width: 100%;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  text-align: center;
+  font-size: 19px;
+  font-weight: 900;
+  padding: 8px 4px;
+  color: #fff;
+}
+
+.numcell input::placeholder {
+  color: var(--faint);
+  font-weight: 700;
+}
+
+.switchcell {
+  display: grid;
+  place-items: center;
+}
+
+.switch {
+  width: 50px;
+  height: 30px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  padding: 3px;
+  display: flex;
+  justify-content: flex-start;
+  transition: background 0.2s;
+}
+
+.switch[data-on='true'] {
+  background: var(--team);
+  justify-content: flex-end;
+  box-shadow: 0 0 18px -3px var(--team);
+}
+
+.switch__knob {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  display: block;
+}
+
+/* ── sticky submit bar ─────────────────────────────────────────────── */
+
+.submitbar {
+  position: sticky;
+  bottom: 0;
+  margin: 20px -16px 0;
+  padding: 10px 16px calc(12px + var(--safe-b));
+  background: linear-gradient(180deg, rgba(6, 6, 11, 0), rgba(6, 6, 11, 0.94) 22%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ── buttons ───────────────────────────────────────────────────────── */
+
+.btn {
+  width: 100%;
+  min-height: 54px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  transition: transform 0.08s, filter 0.15s;
+}
+
+.btn:active {
+  transform: scale(0.985);
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, #22d3ee, #e879f9);
+  color: #06060b;
+  box-shadow: 0 14px 34px -14px rgba(232, 121, 249, 0.7);
+}
+
+.btn--ghost {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  min-height: 48px;
+  font-size: 15px;
+}
+
+.note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.note--warn {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(251, 191, 36, 0.07);
+  border: 1px solid rgba(251, 191, 36, 0.22);
+  color: #d7bd86;
+}
+
+.note--warn .dot {
+  margin-right: 2px;
+  vertical-align: 1px;
+}
+
+/* ── reveal ────────────────────────────────────────────────────────── */
+
+.reveal {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.reveal__kicker {
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+.reveal__teams {
+  display: grid;
+  gap: 28px;
+  width: 100%;
+}
+
+.reveal__team {
+  position: relative;
+  padding: 18px 8px;
+}
+
+.reveal__name {
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--team) 72%, white 28%);
+}
+
+.reveal__delta {
+  font-size: clamp(34px, 12vw, 52px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 0 30px color-mix(in srgb, var(--team) 85%, transparent);
+  margin: 4px 0 2px;
+}
+
+.reveal__total {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.reveal__badge {
+  position: absolute;
+  top: 10px;
+  right: 4px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--team);
+  color: #06060b;
+  box-shadow: 0 0 22px -2px var(--team);
+}
+
+.reveal__hint {
+  margin-top: 26px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.burst {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.burst__p {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+/* ── history ───────────────────────────────────────────────────────── */
+
+.bests {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.best {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.best__label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.best__value {
+  font-size: 24px;
+  font-weight: 900;
+  margin-top: 4px;
+  letter-spacing: -0.02em;
+}
+
+.best__detail {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gamelist {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.gamecard {
+  width: 100%;
+  text-align: left;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: background 0.15s;
+}
+
+.gamecard:active {
+  background: var(--surface-2);
+}
+
+.gamecard__top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.gamecard__teams {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.gamecard__team {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.gamecard__name {
+  font-weight: 700;
+  color: color-mix(in srgb, var(--team) 62%, white 38%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gamecard__score {
+  margin-left: auto;
+  font-weight: 900;
+  font-size: 18px;
+}
+
+.empty {
+  margin: auto;
+  text-align: center;
+  color: var(--muted);
+  padding: 40px 20px;
+}
+
+.empty__mark {
+  font-size: 44px;
+  opacity: 0.25;
+  margin-bottom: 10px;
+}
+
+.empty__sub {
+  font-size: 12.5px;
+  color: var(--faint);
+}
+
+/* ── bottom sheet ──────────────────────────────────────────────────── */
+
+.sheet__scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 3, 7, 0.66);
+  backdrop-filter: blur(3px);
+  z-index: 40;
+}
+
+.sheet {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: min(540px, 100%);
+  z-index: 41;
+  background: #0d0d16;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 22px 22px 0 0;
+  padding: 10px 16px calc(20px + var(--safe-b));
+}
+
+.sheet__grip {
+  width: 38px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  margin: 0 auto 10px;
+}
+
+.sheet__title {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.sheet__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 15px 4px;
+  font-size: 16px;
+  font-weight: 600;
+  border-top: 1px solid var(--line);
+}
+
+.sheet__item--danger {
+  color: var(--danger);
+}
+
+/* ── rolling odometer digits ───────────────────────────────────────── */
+
+.roll {
+  display: inline-flex;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.roll__d {
+  display: inline-block;
+  height: 1em;
+  width: 0.62em;
+  overflow: hidden;
+}
+
+.roll__col {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.roll__c {
+  height: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.roll__sep {
+  display: inline-block;
+  height: 1em;
+}
+
+/* ── small phones ──────────────────────────────────────────────────── */
+
+/* Tighten the two team columns so the category name keeps usable width. */
+@media (max-width: 380px) {
+  .grid {
+    --group: 92px;
+    --gap: 6px;
+  }
+  .grid__head,
+  .crow {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .cell {
+    grid-template-columns: 32px minmax(0, 1fr) 32px;
+  }
+  .step {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+}
+
+/* ── motion preferences ────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before,
+  .aurora::after,
+  .total--lead::after {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
