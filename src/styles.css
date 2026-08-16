@@ -962,12 +962,17 @@ button.rounds__row:active {
   z-index: 40;
 }
 
+/* Centred with auto margins, NOT `left: 50%; transform: translateX(-50%)`.
+   Framer Motion animates this element's `y`, which means it writes the
+   `transform` property itself and would overwrite the centring offset,
+   leaving the sheet shifted half a viewport to the right. */
 .sheet {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   bottom: 0;
   width: min(540px, 100%);
+  margin: 0 auto;
   z-index: 41;
   background: #0d0d16;
   border: 1px solid var(--line);
