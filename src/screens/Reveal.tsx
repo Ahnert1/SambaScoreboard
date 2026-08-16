@@ -9,7 +9,6 @@ import { signed, teamVar } from '../utils'
 
 /** A round this big (or a Team Out) earns particles. */
 const BURST_AT = 2000
-const HOLD_MS = 2800
 
 export function Reveal({
   game,
@@ -32,19 +31,28 @@ export function Reveal({
   // Start on the old totals, then roll up to the new ones a beat later.
   const [shown, setShown] = useState(before)
 
+  // No auto-dismiss: the screen waits for a tap, so nobody misses the moment.
   useEffect(() => {
     const roll = setTimeout(() => setShown(after), 550)
-    const leave = setTimeout(onDone, HOLD_MS)
-    return () => {
-      clearTimeout(roll)
-      clearTimeout(leave)
-    }
+    return () => clearTimeout(roll)
     // Deliberately runs once: this screen animates one specific round.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
-    <div className="screen reveal" onClick={onDone} role="button" tabIndex={0}>
+    <div
+      className="screen reveal"
+      onClick={onDone}
+      onKeyDown={(e) => {
+        // Dismissing is now the only way forward, so give the keyboard a route.
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onDone()
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <motion.p
         className="reveal__kicker"
         initial={{ opacity: 0, y: -8 }}
@@ -98,7 +106,16 @@ export function Reveal({
         })}
       </div>
 
-      <p className="reveal__hint">tap to continue</p>
+      {/* Fades in once the numbers have finished rolling — by then it's the
+          only thing left to do, so it should be the only thing moving. */}
+      <motion.p
+        className="reveal__hint"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.3, duration: 0.5 }}
+      >
+        tap to continue
+      </motion.p>
     </div>
   )
 }

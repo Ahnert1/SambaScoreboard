@@ -82,13 +82,15 @@ export function GameDetail({
       </div>
 
       <h3 className="subhead">Breakdown</h3>
-      <div className="rounds">
+      <div className="rounds rounds--breakdown">
         {usedCategories.map((c) => {
           const per = (id: TeamId) =>
             game.rounds.reduce((s, r) => s + (r[id].counts[c.id] ?? 0), 0)
           return (
             <div key={c.id} className="rounds__row">
-              <span className={cx('rounds__label', 'rounds__label--wide')}>{c.label}</span>
+              <span className={cx('rounds__label', 'rounds__label--wide')}>
+                {c.short ?? c.label}
+              </span>
               {(['a', 'b'] as TeamId[]).map((id) => (
                 <span
                   key={id}

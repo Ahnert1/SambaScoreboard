@@ -33,23 +33,23 @@ export function Scoreboard({
     totals.a === totals.b ? null : totals.a > totals.b ? 'a' : 'b'
 
   const played = game.rounds.length
+  // `max` only matters for games saved before the cap existed — nothing can
+  // create a fifth round now.
   const slots = Math.max(ROUNDS_PER_GAME, played)
   const complete = played >= ROUNDS_PER_GAME
+
+  const finishGame = () => {
+    dispatch({ type: 'finish-game' })
+    onFinished()
+  }
 
   return (
     <div className="screen">
       <header className="topbar">
         <span className="topbar__title">
-          {played === 0
-            ? 'Ready'
-            : complete
-              ? `${played} rounds played`
-              : `Round ${played + 1} of ${ROUNDS_PER_GAME}`}
+          {complete ? 'Game complete' : `Round ${played + 1} of ${ROUNDS_PER_GAME}`}
         </span>
         <span className="spacer" />
-        <button className="iconbtn" onClick={onHistory} aria-label="History">
-          ☰
-        </button>
         <button className="iconbtn" onClick={() => setMenu(true)} aria-label="Game menu">
           ⋯
         </button>
@@ -70,19 +70,25 @@ export function Scoreboard({
         ))}
       </div>
 
-      {leader && played > 0 && (
-        <motion.p
-          className="lead"
-          key={`${leader}-${totals[leader] - totals[leader === 'a' ? 'b' : 'a']}`}
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={teamVar(colorHex(game.teams[leader].color))}
-        >
-          {game.teams[leader].name} up by{' '}
-          {fmt(Math.abs(totals.a - totals.b))}
-        </motion.p>
-      )}
-      {!leader && played > 0 && <p className="lead lead--tied">Dead even</p>}
+      {/* Always rendered, even with nothing to say. Before round 1 an absent
+          message let the table sit right under the totals cards, close enough
+          for their glow to spill onto it. */}
+      <div
+        className="lead"
+        style={leader ? teamVar(colorHex(game.teams[leader].color)) : undefined}
+      >
+        {played === 0 ? null : leader ? (
+          <motion.span
+            key={`${leader}-${totals.a - totals.b}`}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {game.teams[leader].name} up by {fmt(Math.abs(totals.a - totals.b))}
+          </motion.span>
+        ) : (
+          <span className="lead__tied">Dead even</span>
+        )}
+      </div>
 
       <div className="rounds">
         {Array.from({ length: slots }, (_, i) => {
@@ -137,20 +143,23 @@ export function Scoreboard({
 
       <p className="note">Tap any round to enter or edit its scores.</p>
 
+      {/* Round 4 is the last one — past it, finishing is the only way on. */}
       <div className="screen__foot">
-        <button className="btn btn--primary" onClick={onEnterRound}>
-          {complete ? `Add Round ${played + 1}` : `Enter Round ${played + 1}`}
-        </button>
-        {played > 0 && (
-          <button
-            className="btn btn--ghost"
-            onClick={() => {
-              dispatch({ type: 'finish-game' })
-              onFinished()
-            }}
-          >
+        {complete ? (
+          <button className="btn btn--primary" onClick={finishGame}>
             Finish &amp; Save Game
           </button>
+        ) : (
+          <>
+            <button className="btn btn--primary" onClick={onEnterRound}>
+              Enter Round {played + 1}
+            </button>
+            {played > 0 && (
+              <button className="btn btn--ghost" onClick={finishGame}>
+                Finish &amp; Save Game
+              </button>
+            )}
+          </>
         )}
       </div>
 
