@@ -18,9 +18,8 @@ export const ROUNDS_PER_GAME = 4
 
 export type CategoryId =
   | 'cut30'
-  | 'samba'
-  | 'sevens'
-  | 'wildCards'
+  /** Sambas, canastas of 7s and canastas of wilds — all 2,000, counted together. */
+  | 'bigMelds'
   | 'redCanasta'
   | 'mixedCanasta'
   | 'redThrees'
@@ -41,23 +40,24 @@ export interface CategoryDef {
 
 export const CATEGORIES: CategoryDef[] = [
   { id: 'cut30', label: '"30" Cut', note: 'each', value: 100, confirmed: true },
-  { id: 'samba', label: 'Samba', note: '7-card suit run', value: 2000, confirmed: true },
-  { id: 'sevens', label: 'Sevens', note: 'canasta of 7s', value: 2000, confirmed: true },
-  { id: 'wildCards', label: 'Wild Cards', note: 'canasta of wilds', value: 2000, confirmed: true },
   {
-    id: 'redCanasta',
-    label: 'Red / Pure Canasta',
-    short: 'Red Canasta',
+    id: 'bigMelds',
+    label: 'Sambas, 7s & Wild Cards',
+    short: 'Sambas / 7s / Wilds',
     note: 'each',
-    value: 500,
+    value: 2000,
     confirmed: true,
   },
-  { id: 'mixedCanasta', label: 'Mixed Canasta', note: 'each', value: 300, confirmed: true },
+  { id: 'redCanasta', label: 'Red/Pure Canasta', note: 'each', value: 500, confirmed: true },
+  { id: 'mixedCanasta', label: 'Black/Mixed Canasta', note: 'each', value: 300, confirmed: true },
   { id: 'redThrees', label: 'Red 3s', note: 'each', value: 100, confirmed: true },
 ]
 
 /** One-off bonus for the team that went out. Toggle, not a count. */
-export const TEAM_OUT = { label: 'Team Out', note: 'went out this round', value: 2000, confirmed: true }
+export const TEAM_OUT = { label: 'Team Out', note: 'one team per round', value: 2000, confirmed: true }
+
+/** The one free-entry number, added straight to the round score. */
+export const CARD_POINTS = { label: 'Card Count', note: 'counted up from the melds' }
 
 /** True when at least one value on screen is still a guess. */
 export const HAS_PLACEHOLDERS =

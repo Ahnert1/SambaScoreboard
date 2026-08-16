@@ -313,13 +313,15 @@ code {
   text-overflow: ellipsis;
 }
 
+/* No glow, for the same reason as `.teamcol__total`: each rolling digit clips
+   its own overflow, which slices a text-shadow into a hard rectangle per
+   digit. The card behind it already carries the team colour. */
 .total__value {
   margin-top: 8px;
   font-size: clamp(28px, 9vw, 38px);
   font-weight: 900;
   letter-spacing: -0.02em;
   color: #fff;
-  text-shadow: 0 0 22px color-mix(in srgb, var(--team) 65%, transparent);
 }
 
 .total--lead::after {
@@ -380,8 +382,26 @@ code {
   border-top: 0;
 }
 
-.rounds__row:not(.rounds__row--empty):not(.rounds__row--total):active {
+/* Every round row is a button — including the empty ones, which lead to
+   entering the next round. Only the totals row is inert. */
+button.rounds__row:active {
   background: var(--surface-2);
+}
+
+.rounds__row--next {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.rounds__row--next .rounds__label {
+  color: var(--text);
+}
+
+.rounds__hint {
+  grid-column: 2 / span 2;
+  text-align: right;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
 }
 
 .rounds__label {
@@ -449,13 +469,13 @@ code {
 
 /* ── round entry ───────────────────────────────────────────────────── */
 
-/* One row per category, both teams side by side. `--group` fixes the two
-   team column widths so the sticky header stays in register with the rows. */
+/* One row per category: the name spans the row, and the two teams' inputs
+   sit in equal columns beneath it — which leaves room for tap targets big
+   enough to hit, and for the quantity to be a real editable field. */
 .grid {
-  --group: 100px;
-  --gap: 8px;
+  --cellgap: 10px;
   display: grid;
-  gap: 7px;
+  gap: 8px;
   margin-top: 14px;
 }
 
@@ -464,23 +484,14 @@ code {
   top: var(--safe-t);
   z-index: 5;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--group) var(--group);
-  gap: var(--gap);
-  align-items: end;
-  padding: 10px 12px 9px;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--cellgap);
+  padding: 10px 12px;
   border-radius: 14px;
   background: rgba(6, 6, 11, 0.93);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--line);
-}
-
-.grid__headlabel {
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 800;
-  color: var(--faint);
 }
 
 .teamcol {
@@ -500,23 +511,20 @@ code {
   text-overflow: ellipsis;
 }
 
+/* No glow here: each rolling digit clips its own overflow, which would slice
+   a text-shadow into hard-edged rectangles instead of a soft halo. Plain
+   white — the container already carries the team colour. */
 .teamcol__total {
   display: block;
   margin-top: 3px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 900;
   color: #fff;
-  text-shadow: 0 0 14px color-mix(in srgb, var(--team) 75%, transparent);
 }
 
 .crow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--group) var(--group);
-  gap: var(--gap);
-  align-items: center;
-  min-height: 56px;
-  padding: 7px 12px;
-  border-radius: 14px;
+  padding: 10px 12px 12px;
+  border-radius: 16px;
   background: var(--surface);
   border: 1px solid var(--line);
   transition: background 0.18s, border-color 0.18s;
@@ -528,12 +536,11 @@ code {
   border-color: rgba(255, 255, 255, 0.19);
 }
 
-.crow--field {
-  min-height: 60px;
-}
-
-.crow__label {
-  min-width: 0;
+.crow__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0 2px 9px;
 }
 
 .crow__name {
@@ -541,36 +548,69 @@ code {
   align-items: center;
   gap: 5px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.2;
+  min-width: 0;
 }
 
-.crow__meta {
-  font-size: 10.5px;
+.crow__value {
+  margin-left: auto;
+  font-size: 11.5px;
   color: var(--muted);
-  margin-top: 3px;
-  line-height: 1.25;
+  white-space: nowrap;
+  flex: none;
 }
 
-/* One team's −/count/+ group inside a category row. */
+.crow__cells {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--cellgap);
+}
+
+/* One team's −/quantity/+ group. */
 .cell {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) 34px;
-  gap: 2px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 6px;
   align-items: center;
-  justify-items: center;
 }
 
-.cell__n {
-  font-size: 18px;
+/* Card count: free entry, no steppers. */
+.cell--wide {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.numinput {
+  height: 46px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 2px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid color-mix(in srgb, var(--team) 28%, transparent);
+  outline: none;
+  text-align: center;
+  font-size: 21px;
   font-weight: 900;
-  color: var(--faint);
-  transition: color 0.18s, text-shadow 0.18s;
+  color: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
-.cell__n--on {
-  color: #fff;
-  text-shadow: 0 0 12px color-mix(in srgb, var(--team) 90%, transparent);
+.numinput::placeholder {
+  color: var(--faint);
+  font-weight: 700;
+}
+
+/* Border only — an input clips its content box, so a glow on the value would
+   be squared off at the edges. The border carries the "has a value" cue. */
+.numinput--on {
+  border-color: color-mix(in srgb, var(--team) 55%, transparent);
+}
+
+.numinput:focus {
+  border-color: var(--team);
+  background: color-mix(in srgb, var(--team) 14%, var(--surface-2));
+  box-shadow: 0 0 20px -4px var(--team);
 }
 
 .dot {
@@ -584,18 +624,27 @@ code {
 }
 
 .step {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 46px;
   flex: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--surface-2);
   border: 1px solid var(--line);
-  font-size: 19px;
-  font-weight: 700;
   display: grid;
   place-items: center;
-  line-height: 1;
   transition: transform 0.08s, background 0.15s;
+}
+
+/* Block display keeps the SVG off the text baseline, so `place-items: center`
+   centres the glyph exactly rather than centring its line box. */
+.step__icon {
+  display: block;
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
 }
 
 .step:active {
@@ -613,52 +662,22 @@ code {
   color: color-mix(in srgb, var(--team) 70%, white 30%);
 }
 
-/* Card-points input, one per team column. */
-.numcell {
-  display: flex;
-  border-radius: 11px;
-  background: var(--surface-2);
-  border: 1px solid color-mix(in srgb, var(--team) 30%, transparent);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.numcell:focus-within {
-  border-color: var(--team);
-  box-shadow: 0 0 18px -5px var(--team);
-}
-
-.numcell input {
-  width: 100%;
-  min-width: 0;
-  background: none;
-  border: 0;
-  outline: none;
-  text-align: center;
-  font-size: 19px;
-  font-weight: 900;
-  padding: 8px 4px;
-  color: #fff;
-}
-
-.numcell input::placeholder {
-  color: var(--faint);
-  font-weight: 700;
-}
-
 .switchcell {
   display: grid;
   place-items: center;
+  min-height: 46px;
 }
 
 .switch {
-  width: 50px;
-  height: 30px;
+  width: 62px;
+  height: 36px;
   flex: none;
   border-radius: 999px;
   background: var(--surface-2);
   border: 1px solid var(--line);
   padding: 3px;
   display: flex;
+  align-items: center;
   justify-content: flex-start;
   transition: background 0.2s;
 }
@@ -670,23 +689,11 @@ code {
 }
 
 .switch__knob {
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: #fff;
   display: block;
-}
-
-/* ── sticky submit bar ─────────────────────────────────────────────── */
-
-.submitbar {
-  position: sticky;
-  bottom: 0;
-  margin: 20px -16px 0;
-  padding: 10px 16px calc(12px + var(--safe-b));
-  background: linear-gradient(180deg, rgba(6, 6, 11, 0), rgba(6, 6, 11, 0.94) 22%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 /* ── buttons ───────────────────────────────────────────────────────── */
@@ -705,10 +712,12 @@ code {
   transform: scale(0.985);
 }
 
+/* No drop glow: a magenta shadow under the button reads as a coloured haze
+   sitting behind it rather than as light coming off it. The gradient fill is
+   bright enough on its own. */
 .btn--primary {
   background: linear-gradient(135deg, #22d3ee, #e879f9);
   color: #06060b;
-  box-shadow: 0 14px 34px -14px rgba(232, 121, 249, 0.7);
 }
 
 .btn--ghost {
@@ -1034,11 +1043,10 @@ code {
 
 /* ── small phones ──────────────────────────────────────────────────── */
 
-/* Tighten the two team columns so the category name keeps usable width. */
+/* Trim the steppers a little so the quantity field keeps a usable width. */
 @media (max-width: 380px) {
   .grid {
-    --group: 92px;
-    --gap: 6px;
+    --cellgap: 8px;
   }
   .grid__head,
   .crow {
@@ -1046,12 +1054,18 @@ code {
     padding-right: 10px;
   }
   .cell {
-    grid-template-columns: 32px minmax(0, 1fr) 32px;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    gap: 4px;
   }
   .step {
-    width: 32px;
-    height: 32px;
-    font-size: 18px;
+    width: 40px;
+  }
+  .step__icon {
+    width: 19px;
+    height: 19px;
+  }
+  .crow__name {
+    font-size: 14px;
   }
 }
 

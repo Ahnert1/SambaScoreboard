@@ -1,4 +1,4 @@
-import { CATEGORIES, TEAM_OUT, scoreEntry } from '../scoring'
+import { CARD_POINTS, CATEGORIES, TEAM_OUT, scoreEntry } from '../scoring'
 import { useStore } from '../store'
 import { colorHex, type Game, type TeamId } from '../types'
 import { cx, dateLabel, fmt, teamVar } from '../utils'
@@ -102,7 +102,7 @@ export function GameDetail({
           )
         })}
         <div className="rounds__row">
-          <span className="rounds__label rounds__label--wide">Card points</span>
+          <span className="rounds__label rounds__label--wide">{CARD_POINTS.label}</span>
           {(['a', 'b'] as TeamId[]).map((id) => (
             <span
               key={id}

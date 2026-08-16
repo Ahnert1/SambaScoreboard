@@ -87,23 +87,36 @@ export function Scoreboard({
       <div className="rounds">
         {Array.from({ length: slots }, (_, i) => {
           const round = game.rounds[i]
+          // Rounds fill in order, so every empty slot leads to the same place:
+          // entering the next unplayed round.
+          const isNext = !round && i === played
           return (
             <button
               key={round?.id ?? `empty-${i}`}
-              className={cx('rounds__row', !round && 'rounds__row--empty')}
-              onClick={round ? () => onEditRound(round.id) : undefined}
-              disabled={!round}
+              className={cx(
+                'rounds__row',
+                !round && 'rounds__row--empty',
+                isNext && 'rounds__row--next',
+              )}
+              onClick={round ? () => onEditRound(round.id) : onEnterRound}
+              aria-label={
+                round ? `Edit round ${i + 1}` : `Enter round ${played + 1}`
+              }
             >
               <span className="rounds__label">R{i + 1}</span>
-              {(['a', 'b'] as TeamId[]).map((id) => (
-                <span
-                  key={id}
-                  className={cx('rounds__cell', !round && 'rounds__cell--blank')}
-                  style={teamVar(colorHex(game.teams[id].color))}
-                >
-                  {round ? fmt(scoreEntry(round[id])) : '—'}
-                </span>
-              ))}
+              {isNext ? (
+                <span className="rounds__hint">Tap to enter</span>
+              ) : (
+                (['a', 'b'] as TeamId[]).map((id) => (
+                  <span
+                    key={id}
+                    className={cx('rounds__cell', !round && 'rounds__cell--blank')}
+                    style={teamVar(colorHex(game.teams[id].color))}
+                  >
+                    {round ? fmt(scoreEntry(round[id])) : '—'}
+                  </span>
+                ))
+              )}
             </button>
           )
         })}
@@ -122,7 +135,7 @@ export function Scoreboard({
         </div>
       </div>
 
-      {played > 0 && <p className="note">Tap a round to edit or delete it.</p>}
+      <p className="note">Tap any round to enter or edit its scores.</p>
 
       <div className="screen__foot">
         <button className="btn btn--primary" onClick={onEnterRound}>

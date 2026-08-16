@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -6,6 +7,11 @@ import react from '@vitejs/plugin-react'
  * because the root `index.html` is the *built* single-file app that GitHub
  * Pages serves. Keeping them apart means `npm run dev` never accidentally
  * serves a stale build.
+ *
+ * That split puts `src/` outside Vite's root, and the dev server resolves a
+ * script `src` as a URL, not a filesystem path — so a relative `../src/...`
+ * would escape the root and 404. The alias below pins `/src/` to the real
+ * folder, which resolves identically in dev and in the build.
  *
  * `base: './'` keeps every path relative so the app works from a GitHub Pages
  * project subpath (username.github.io/SambaScoreboard/) without extra config.
@@ -16,6 +22,14 @@ export default defineConfig({
   publicDir: '../public',
   plugins: [react()],
   server: { host: true },
+  resolve: {
+    alias: [
+      {
+        find: /^\/src\//,
+        replacement: fileURLToPath(new URL('./src/', import.meta.url)),
+      },
+    ],
+  },
   build: {
     outDir: '../dist',
     emptyOutDir: true,

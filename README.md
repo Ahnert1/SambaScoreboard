@@ -90,11 +90,12 @@ currently `true`, so neither appears.
 - **New Game** — name both teams, pick a neon colour each.
 - **Scoreboard** — big rolling totals, the leader's card pulses, four round
   slots. Tap any played round to edit or delete it.
-- **Round entry** — one row per category with both teams' colour-coded `+`/`−`
-  counters side by side, so a category gets counted for the whole table in one
-  place. Same for the free **Card Points** field and the **Team Out** toggle. A
-  sticky header keeps both team names and their live round totals on screen
-  while the list scrolls.
+- **Round entry** — one row per category, both teams side by side, so a category
+  gets counted for the whole table in one place. Each quantity is a real number
+  field: type it on the keypad and the keyboard's next key walks you straight
+  down the round — team A then team B of each category in turn. The `−`/`+`
+  buttons are there to nudge by one. A sticky header keeps both team names and
+  their live round totals on screen while the list scrolls.
 - **Reveal** — after submitting, the totals roll up and big rounds get particles.
   Tap to skip.
 - **History** — finished games with a round-by-round and per-category breakdown,

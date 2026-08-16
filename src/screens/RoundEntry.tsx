@@ -75,7 +75,11 @@ export function RoundEntry({
         onChange={(team: TeamId, next) => setRound((r) => ({ ...r, [team]: next }))}
       />
 
-      <div className="submitbar">
+      {/* Sits in the flow rather than sticking to the bottom: a sticky bar has
+          to paint an opaque backdrop to hide the rows scrolling under it, and
+          that backdrop blocks the aurora, reading as a dark slab behind the
+          button. Sequential entry ends on the last field anyway, right here. */}
+      <div className="screen__foot">
         <button className="btn btn--primary" onClick={submit}>
           {isNew ? 'Submit Round' : 'Save Changes'}
         </button>

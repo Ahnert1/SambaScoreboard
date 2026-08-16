@@ -1,17 +1,70 @@
 import { motion } from 'framer-motion'
-import { CATEGORIES, TEAM_OUT, scoreEntry, type CategoryId } from '../scoring'
+import type { KeyboardEvent } from 'react'
+import {
+  CARD_POINTS,
+  CATEGORIES,
+  TEAM_OUT,
+  scoreEntry,
+  type CategoryId,
+} from '../scoring'
 import { colorHex, type RoundEntry, type Team, type TeamId } from '../types'
 import { buzz, clamp, cx, fmt, teamVar } from '../utils'
 import { RollingNumber } from './RollingNumber'
 
-const MAX_COUNT = 99
+const MAX_COUNT = 999
+const MAX_CARD_POINTS = 999999
 const IDS: TeamId[] = ['a', 'b']
 
+/** Strips anything that isn't a digit and caps the length. */
+const digitsOnly = (raw: string, max: number) =>
+  raw.replace(/[^\d]/g, '').slice(0, max)
+
 /**
- * One row per category, both teams side by side — so a category gets counted
- * for the whole table in one place instead of scrolling between two forms.
- * Column widths come from `--group` on `.grid`, shared by the sticky header
- * and every row so the columns stay in register.
+ * Moves focus to the next number field in DOM order — which is also visual
+ * order: team A then team B of a category, then down to the next category.
+ * Wired to the keyboard's next/done key so a whole round can be typed without
+ * ever reaching for the screen.
+ */
+function focusNextField(el: HTMLInputElement) {
+  const form = el.form
+  if (!form) return
+  const fields = Array.from(form.querySelectorAll<HTMLInputElement>('input[data-field]'))
+  const next = fields[fields.indexOf(el) + 1]
+  if (next) {
+    next.focus()
+    next.select()
+  } else {
+    el.blur()
+  }
+}
+
+const onFieldKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  if (e.key !== 'Enter') return
+  e.preventDefault()
+  focusNextField(e.currentTarget)
+}
+
+/*
+ * Drawn rather than typed: a text "−"/"+" sits on the font's baseline, so it
+ * lands a couple of pixels below the optical centre of the button no matter
+ * how the box is centred. A path in a square viewBox is exact.
+ */
+const MinusIcon = () => (
+  <svg className="step__icon" viewBox="0 0 24 24" aria-hidden focusable="false">
+    <path d="M6 12h12" />
+  </svg>
+)
+
+const PlusIcon = () => (
+  <svg className="step__icon" viewBox="0 0 24 24" aria-hidden focusable="false">
+    <path d="M12 6v12M6 12h12" />
+  </svg>
+)
+
+/**
+ * One row per category, both teams side by side, so a category gets counted
+ * for the whole table in one place. The quantity is a real number field —
+ * typing is the primary input and the −/+ buttons are just a nudge by one.
  */
 export function RoundGrid({
   teams,
@@ -28,7 +81,6 @@ export function RoundGrid({
   }
 
   const setCount = (team: TeamId, id: CategoryId, next: number) => {
-    buzz()
     const entry = entries[team]
     onChange(team, {
       ...entry,
@@ -36,11 +88,23 @@ export function RoundGrid({
     })
   }
 
+  /** Only one team goes out in a round, so switching one on clears the other. */
+  const toggleOut = (team: TeamId) => {
+    const other: TeamId = team === 'a' ? 'b' : 'a'
+    const goingOut = !entries[team].teamOut
+    buzz(14)
+    onChange(team, { ...entries[team], teamOut: goingOut })
+    if (goingOut && entries[other].teamOut) {
+      onChange(other, { ...entries[other], teamOut: false })
+    }
+  }
+
   return (
-    <div className="grid">
+    // A real <form> is what makes iOS show the ‹ › Done accessory bar above
+    // the number pad, which is the other half of sequential entry.
+    <form className="grid" onSubmit={(e) => e.preventDefault()}>
       {/* Sticky header: which column is whose, plus each team's live total. */}
       <div className="grid__head">
-        <span className="grid__headlabel">Category</span>
         {IDS.map((id) => (
           <div key={id} className="teamcol" style={teamVar(hex[id])}>
             <span className="teamcol__name">{teams[id].name}</span>
@@ -55,102 +119,141 @@ export function RoundGrid({
         const active = IDS.some((id) => (entries[id].counts[cat.id] ?? 0) > 0)
         return (
           <div key={cat.id} className={cx('crow', active && 'crow--on')}>
-            <div className="crow__label">
-              <div className="crow__name">
+            <div className="crow__head">
+              <span className="crow__name">
                 {cat.short ?? cat.label}
                 {!cat.confirmed && (
                   <span className="dot" title="Placeholder value — not confirmed yet" />
                 )}
-              </div>
-              <div className="crow__meta">
-                {fmt(cat.value)} · {cat.note}
-              </div>
+              </span>
+              <span className="crow__value">
+                {fmt(cat.value)} {cat.note}
+              </span>
             </div>
 
-            {IDS.map((id) => {
-              const count = entries[id].counts[cat.id] ?? 0
-              return (
-                <div key={id} className="cell" style={teamVar(hex[id])}>
-                  <button
-                    className="step"
-                    onClick={() => setCount(id, cat.id, count - 1)}
-                    disabled={count === 0}
-                    aria-label={`One fewer ${cat.label} for ${teams[id].name}`}
-                  >
-                    −
-                  </button>
-                  <span className={cx('cell__n', count > 0 && 'cell__n--on')}>{count}</span>
-                  <button
-                    className="step step--plus"
-                    onClick={() => setCount(id, cat.id, count + 1)}
-                    aria-label={`One more ${cat.label} for ${teams[id].name}`}
-                  >
-                    +
-                  </button>
-                </div>
-              )
-            })}
+            <div className="crow__cells">
+              {IDS.map((id) => {
+                const count = entries[id].counts[cat.id] ?? 0
+                return (
+                  <div key={id} className="cell" style={teamVar(hex[id])}>
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      className="step"
+                      onClick={() => {
+                        buzz()
+                        setCount(id, cat.id, count - 1)
+                      }}
+                      disabled={count === 0}
+                      aria-label={`One fewer ${cat.label} for ${teams[id].name}`}
+                    >
+                      <MinusIcon />
+                    </button>
+
+                    <input
+                      className={cx('numinput', count > 0 && 'numinput--on')}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      enterKeyHint="next"
+                      data-field=""
+                      value={count === 0 ? '' : String(count)}
+                      placeholder="0"
+                      onChange={(e) => {
+                        const digits = digitsOnly(e.target.value, 3)
+                        setCount(id, cat.id, digits === '' ? 0 : Number(digits))
+                      }}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onKeyDown={onFieldKeyDown}
+                      aria-label={`${cat.label} for ${teams[id].name}`}
+                    />
+
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      className="step step--plus"
+                      onClick={() => {
+                        buzz()
+                        setCount(id, cat.id, count + 1)
+                      }}
+                      aria-label={`One more ${cat.label} for ${teams[id].name}`}
+                    >
+                      <PlusIcon />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )
       })}
 
-      {/* Card points — the one free-entry number, one per team. */}
-      <div className="crow crow--field">
-        <div className="crow__label">
-          <div className="crow__name">Card Points</div>
-          <div className="crow__meta">counted up from the melds</div>
+      {/* Card count — free entry, no steppers; nobody nudges this by one. */}
+      <div
+        className={cx('crow', IDS.some((id) => entries[id].cardPoints > 0) && 'crow--on')}
+      >
+        <div className="crow__head">
+          <span className="crow__name">{CARD_POINTS.label}</span>
+          <span className="crow__value">{CARD_POINTS.note}</span>
         </div>
-        {IDS.map((id) => (
-          <div key={id} className="numcell" style={teamVar(hex[id])}>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={entries[id].cardPoints === 0 ? '' : String(entries[id].cardPoints)}
-              placeholder="0"
-              onChange={(e) => {
-                const digits = e.target.value.replace(/[^\d]/g, '').slice(0, 6)
-                onChange(id, {
-                  ...entries[id],
-                  cardPoints: digits === '' ? 0 : Number(digits),
-                })
-              }}
-              onFocus={(e) => e.currentTarget.select()}
-              aria-label={`Card points for ${teams[id].name}`}
-            />
-          </div>
-        ))}
+        <div className="crow__cells">
+          {IDS.map((id) => (
+            <div key={id} className="cell cell--wide" style={teamVar(hex[id])}>
+              <input
+                className={cx('numinput', entries[id].cardPoints > 0 && 'numinput--on')}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                // Last field in the sequence, so the key reads Done, not Next.
+                enterKeyHint={id === 'b' ? 'done' : 'next'}
+                data-field=""
+                value={entries[id].cardPoints === 0 ? '' : String(entries[id].cardPoints)}
+                placeholder="0"
+                onChange={(e) => {
+                  const digits = digitsOnly(e.target.value, 6)
+                  onChange(id, {
+                    ...entries[id],
+                    cardPoints: digits === '' ? 0 : clamp(Number(digits), 0, MAX_CARD_POINTS),
+                  })
+                }}
+                onFocus={(e) => e.currentTarget.select()}
+                onKeyDown={onFieldKeyDown}
+                aria-label={`${CARD_POINTS.label} for ${teams[id].name}`}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Team Out — a toggle per team, not a count. */}
-      <div className={cx('crow', 'crow--field', IDS.some((id) => entries[id].teamOut) && 'crow--on')}>
-        <div className="crow__label">
-          <div className="crow__name">{TEAM_OUT.label}</div>
-          <div className="crow__meta">
+      <div className={cx('crow', IDS.some((id) => entries[id].teamOut) && 'crow--on')}>
+        <div className="crow__head">
+          <span className="crow__name">{TEAM_OUT.label}</span>
+          <span className="crow__value">
             {fmt(TEAM_OUT.value)} · {TEAM_OUT.note}
-          </div>
+          </span>
         </div>
-        {IDS.map((id) => (
-          <div key={id} className="switchcell" style={teamVar(hex[id])}>
-            <button
-              className="switch"
-              data-on={entries[id].teamOut}
-              aria-pressed={entries[id].teamOut}
-              aria-label={`${teams[id].name} went out`}
-              onClick={() => {
-                buzz(14)
-                onChange(id, { ...entries[id], teamOut: !entries[id].teamOut })
-              }}
-            >
-              <motion.span
-                className="switch__knob"
-                layout
-                transition={{ type: 'spring', stiffness: 500, damping: 34 }}
-              />
-            </button>
-          </div>
-        ))}
+        <div className="crow__cells">
+          {IDS.map((id) => (
+            <div key={id} className="switchcell" style={teamVar(hex[id])}>
+              <button
+                type="button"
+                className="switch"
+                data-on={entries[id].teamOut}
+                aria-pressed={entries[id].teamOut}
+                aria-label={`${teams[id].name} went out`}
+                onClick={() => toggleOut(id)}
+              >
+                <motion.span
+                  className="switch__knob"
+                  layout
+                  transition={{ type: 'spring', stiffness: 500, damping: 34 }}
+                />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </form>
   )
 }

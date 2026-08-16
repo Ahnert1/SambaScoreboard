@@ -15,7 +15,7 @@ function allTimeBests(games: Game[]): Best[] {
 
   let bestRound = { points: -1, team: '', when: 0 }
   let bestGame = { points: -1, team: '', when: 0 }
-  let sambas = 0
+  let bigMelds = 0
   let rounds = 0
 
   for (const g of games) {
@@ -28,7 +28,7 @@ function allTimeBests(games: Game[]): Best[] {
         if (pts > bestRound.points) {
           bestRound = { points: pts, team: g.teams[id].name, when: g.createdAt }
         }
-        sambas += r[id].counts.samba ?? 0
+        bigMelds += r[id].counts.bigMelds ?? 0
       }
       if (gameTotal > bestGame.points) {
         bestGame = { points: gameTotal, team: g.teams[id].name, when: g.createdAt }
@@ -53,7 +53,7 @@ function allTimeBests(games: Game[]): Best[] {
       detail: `${bestGame.team} · ${dateLabel(bestGame.when)}`,
     })
   }
-  out.push({ label: 'Sambas', value: fmt(sambas), detail: 'all time' })
+  out.push({ label: '2,000s', value: fmt(bigMelds), detail: 'sambas, 7s & wilds' })
   return out
 }
 
